@@ -378,6 +378,7 @@
 </nav>
 
 <section class="hero">
+  <canvas id="hero-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;opacity:0.45;"></canvas>
   <div class="hero-grid"></div>
   <div class="hero-glow"></div>
   <div class="hero-content fade-up">
@@ -547,6 +548,209 @@
 </footer>
 
 <script>
+  // hero canvas
+  (function() {
+    const canvas = document.getElementById('hero-canvas');
+    const ctx = canvas.getContext('2d');
+    let W, H, shapes = [], frame = 0;
+
+    const ACCENT = 'rgba(200,240,96,';
+    const ACCENT2 = 'rgba(96,208,240,';
+
+    function resize() {
+      W = canvas.width = canvas.offsetWidth;
+      H = canvas.height = canvas.offsetHeight;
+    }
+
+    function rand(a, b) { return a + Math.random() * (b - a); }
+
+    function initShapes() {
+      shapes = [];
+      // rings
+      for (let i = 0; i < 6; i++) {
+        shapes.push({
+          type: 'ring',
+          x: rand(0.1, 0.9), y: rand(0.1, 0.9),
+          r: rand(40, 120),
+          speed: rand(0.002, 0.006) * (Math.random() > 0.5 ? 1 : -1),
+          phase: rand(0, Math.PI * 2),
+          drift: { x: rand(-0.0001, 0.0001), y: rand(-0.0001, 0.0001) },
+          color: Math.random() > 0.5 ? ACCENT : ACCENT2,
+          alpha: rand(0.08, 0.22),
+          strokeW: rand(0.5, 1.5),
+        });
+      }
+      // dashed arcs
+      for (let i = 0; i < 4; i++) {
+        shapes.push({
+          type: 'arc',
+          x: rand(0.05, 0.95), y: rand(0.05, 0.95),
+          r: rand(60, 180),
+          startAngle: rand(0, Math.PI * 2),
+          sweepAngle: rand(0.8, 2.2),
+          speed: rand(0.003, 0.008) * (Math.random() > 0.5 ? 1 : -1),
+          color: ACCENT,
+          alpha: rand(0.06, 0.18),
+          strokeW: rand(0.5, 1),
+          drift: { x: rand(-0.00008, 0.00008), y: rand(-0.00008, 0.00008) },
+        });
+      }
+      // arrows / chevrons
+      for (let i = 0; i < 8; i++) {
+        shapes.push({
+          type: 'arrow',
+          x: rand(0.05, 0.95), y: rand(0.1, 0.9),
+          size: rand(12, 28),
+          angle: rand(0, Math.PI * 2),
+          spinSpeed: rand(0.003, 0.01) * (Math.random() > 0.5 ? 1 : -1),
+          floatSpeed: rand(0.0004, 0.001),
+          floatAmp: rand(0.01, 0.03),
+          floatPhase: rand(0, Math.PI * 2),
+          color: Math.random() > 0.5 ? ACCENT : ACCENT2,
+          alpha: rand(0.08, 0.2),
+          strokeW: rand(0.8, 1.5),
+        });
+      }
+      // crosshairs
+      for (let i = 0; i < 4; i++) {
+        shapes.push({
+          type: 'crosshair',
+          x: rand(0.05, 0.95), y: rand(0.1, 0.9),
+          r: rand(16, 36),
+          spinSpeed: rand(0.002, 0.006) * (Math.random() > 0.5 ? 1 : -1),
+          floatSpeed: rand(0.0003, 0.0008),
+          floatAmp: rand(0.008, 0.025),
+          floatPhase: rand(0, Math.PI * 2),
+          color: ACCENT2,
+          alpha: rand(0.07, 0.18),
+          strokeW: 0.8,
+          angle: 0,
+        });
+      }
+      // long lines
+      for (let i = 0; i < 5; i++) {
+        shapes.push({
+          type: 'line',
+          x1: rand(0, 1), y1: rand(0, 1),
+          x2: rand(0, 1), y2: rand(0, 1),
+          speed: rand(0.0001, 0.0004),
+          phase: rand(0, Math.PI * 2),
+          color: ACCENT,
+          alpha: rand(0.03, 0.08),
+          strokeW: 0.5,
+        });
+      }
+    }
+
+    function drawRing(s, t) {
+      const px = (s.x + s.drift.x * t) * W;
+      const py = (s.y + s.drift.y * t) * H;
+      const pulse = 1 + 0.06 * Math.sin(t * 0.001 + s.phase);
+      ctx.beginPath();
+      ctx.arc(px, py, s.r * pulse, 0, Math.PI * 2);
+      ctx.strokeStyle = s.color + s.alpha + ')';
+      ctx.lineWidth = s.strokeW;
+      ctx.stroke();
+      // inner ring
+      ctx.beginPath();
+      ctx.arc(px, py, s.r * pulse * 0.6, 0, Math.PI * 2);
+      ctx.strokeStyle = s.color + (s.alpha * 0.5) + ')';
+      ctx.lineWidth = s.strokeW * 0.6;
+      ctx.stroke();
+    }
+
+    function drawArc(s, t) {
+      const px = (s.x + s.drift.x * t) * W;
+      const py = (s.y + s.drift.y * t) * H;
+      const start = s.startAngle + s.speed * t;
+      ctx.beginPath();
+      ctx.arc(px, py, s.r, start, start + s.sweepAngle);
+      ctx.strokeStyle = s.color + s.alpha + ')';
+      ctx.lineWidth = s.strokeW;
+      ctx.setLineDash([8, 6]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    function drawArrow(s, t) {
+      const px = (s.x) * W;
+      const py = (s.y + Math.sin(t * s.floatSpeed + s.floatPhase) * s.floatAmp) * H;
+      const ang = s.angle + s.spinSpeed * t;
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(ang);
+      ctx.strokeStyle = s.color + s.alpha + ')';
+      ctx.lineWidth = s.strokeW;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      const sz = s.size;
+      // chevron arrow
+      ctx.beginPath();
+      ctx.moveTo(-sz * 0.5, sz * 0.4);
+      ctx.lineTo(0, -sz * 0.4);
+      ctx.lineTo(sz * 0.5, sz * 0.4);
+      ctx.stroke();
+      // tail
+      ctx.beginPath();
+      ctx.moveTo(0, -sz * 0.4);
+      ctx.lineTo(0, sz * 0.6);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawCrosshair(s, t) {
+      const px = s.x * W;
+      const py = (s.y + Math.sin(t * s.floatSpeed + s.floatPhase) * s.floatAmp) * H;
+      s.angle += s.spinSpeed;
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(s.angle);
+      ctx.strokeStyle = s.color + s.alpha + ')';
+      ctx.lineWidth = s.strokeW;
+      const r = s.r;
+      // outer circle
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.stroke();
+      // cross lines (gapped)
+      const gap = r * 0.35;
+      ctx.beginPath();
+      ctx.moveTo(-r, 0); ctx.lineTo(-gap, 0);
+      ctx.moveTo(gap, 0); ctx.lineTo(r, 0);
+      ctx.moveTo(0, -r); ctx.lineTo(0, -gap);
+      ctx.moveTo(0, gap); ctx.lineTo(0, r);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawLine(s, t) {
+      const alpha = s.alpha * (0.5 + 0.5 * Math.sin(t * s.speed + s.phase));
+      ctx.beginPath();
+      ctx.moveTo(s.x1 * W, s.y1 * H);
+      ctx.lineTo(s.x2 * W, s.y2 * H);
+      ctx.strokeStyle = s.color + alpha + ')';
+      ctx.lineWidth = s.strokeW;
+      ctx.stroke();
+    }
+
+    function loop(t) {
+      ctx.clearRect(0, 0, W, H);
+      for (const s of shapes) {
+        if (s.type === 'ring') drawRing(s, t);
+        else if (s.type === 'arc') drawArc(s, t);
+        else if (s.type === 'arrow') drawArrow(s, t);
+        else if (s.type === 'crosshair') drawCrosshair(s, t);
+        else if (s.type === 'line') drawLine(s, t);
+      }
+      requestAnimationFrame(loop);
+    }
+
+    resize();
+    initShapes();
+    window.addEventListener('resize', () => { resize(); });
+    requestAnimationFrame(loop);
+  })();
+
   // cursor
   const cursor = document.getElementById('cursor');
   document.addEventListener('mousemove', e => {
