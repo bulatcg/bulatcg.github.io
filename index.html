@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bulat — Video Editor & 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #080808;
+    --bg2: #0f0f0f;
+    --surface: #141414;
+    --border: #222;
+    --text: #e8e8e2;
+    --muted: #666;
+    --accent: #c8f060;
+    --accent2: #60d0f0;
+    --font-head: 'Syne', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* cursor */
+  body { cursor: none; }
+  #cursor {
+    width: 10px; height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.08s, width 0.2s, height 0.2s, background 0.2s;
+    mix-blend-mode: difference;
+  }
+  #cursor.big { width: 40px; height: 40px; }
+
+  /* noise overlay */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* nav */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.5rem 3rem;
+    z-index: 100;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.3s, background 0.3s;
+  }
+  nav.scrolled { border-color: var(--border); background: rgba(8,8,8,0.9); backdrop-filter: blur(12px); }
+  .nav-logo {
+    font-family: var(--font-head);
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 2rem; list-style: none; }
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+
+  /* hero */
+  .hero {
+    min-height: 100vh;
+    display: flex; align-items: flex-end;
+    padding: 0 3rem 5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(200,240,96,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,240,96,0.03) 1px, transparent 1px);
+    background-size: 80px 80px;
+  }
+  .hero-glow {
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(200,240,96,0.06) 0%, transparent 70%);
+    top: -100px; right: -100px;
+    pointer-events: none;
+  }
+  .hero-content { position: relative; z-index: 2; max-width: 900px; }
+  .hero-tag {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+    display: flex; align-items: center; gap: 0.75rem;
+  }
+  .hero-tag::before {
+    content: '';
+    width: 32px; height: 1px;
+    background: var(--accent);
+  }
+  .hero-title {
+    font-family: var(--font-head);
+    font-size: clamp(52px, 8vw, 110px);
+    font-weight: 800;
+    line-height: 0.92;
+    letter-spacing: -0.03em;
+    margin-bottom: 2rem;
+  }
+  .hero-title .line2 { color: var(--muted); }
+  .hero-title .accent { color: var(--accent); }
+  .hero-sub {
+    max-width: 440px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 3rem;
+  }
+  .hero-actions { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+  .btn-primary {
+    background: var(--accent);
+    color: #080808;
+    padding: 12px 28px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 400;
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: inline-block;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(200,240,96,0.25); }
+  .btn-ghost {
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 12px 28px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    transition: border-color 0.2s, color 0.2s;
+    display: inline-block;
+  }
+  .btn-ghost:hover { border-color: var(--muted); color: var(--text); }
+
+  .hero-stats {
+    position: absolute; right: 3rem; bottom: 5rem;
+    display: flex; flex-direction: column; gap: 2rem;
+    z-index: 2;
+  }
+  .stat-item { text-align: right; }
+  .stat-num {
+    font-family: var(--font-head);
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+  }
+  .stat-num span { color: var(--accent); }
+  .stat-label { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+
+  /* sections */
+  section { padding: 6rem 3rem; }
+  .section-label {
+    font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 3rem;
+    display: flex; align-items: center; gap: 0.75rem;
+  }
+  .section-label::before { content: ''; width: 32px; height: 1px; background: var(--accent); }
+
+  /* skills */
+  .skills-section { border-top: 1px solid var(--border); }
+  .skills-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); }
+  .skill-card {
+    background: var(--bg);
+    padding: 2.5rem;
+    transition: background 0.2s;
+  }
+  .skill-card:hover { background: var(--surface); }
+  .skill-icon {
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 1rem;
+  }
+  .skill-title {
+    font-family: var(--font-head);
+    font-size: 22px; font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+  .skill-desc { color: var(--muted); font-size: 13px; line-height: 1.7; }
+  .skill-tools {
+    margin-top: 1.5rem; display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .tool-tag {
+    font-size: 11px; padding: 4px 10px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* works */
+  .works-section { border-top: 1px solid var(--border); }
+  .works-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--border); }
+  .work-card {
+    background: var(--bg);
+    aspect-ratio: 16/9;
+    position: relative; overflow: hidden;
+    cursor: none;
+  }
+  .work-card.tall { aspect-ratio: 9/16; }
+  .work-placeholder {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 1rem;
+  }
+  .work-placeholder-bg {
+    position: absolute; inset: 0;
+    background: var(--surface);
+    transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+  .work-card:hover .work-placeholder-bg { transform: scale(1.03); }
+  .work-placeholder-lines {
+    position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 20px,
+      rgba(255,255,255,0.015) 20px,
+      rgba(255,255,255,0.015) 21px
+    );
+  }
+  .work-info {
+    position: absolute; inset: 0;
+    padding: 1.5rem;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    background: linear-gradient(to top, rgba(8,8,8,0.8) 0%, transparent 60%);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .work-card:hover .work-info { opacity: 1; }
+  .work-num {
+    position: absolute; top: 1.5rem; left: 1.5rem;
+    font-size: 11px; color: var(--muted); letter-spacing: 0.1em;
+  }
+  .work-type {
+    font-size: 11px; color: var(--accent); letter-spacing: 0.1em;
+    text-transform: uppercase; margin-bottom: 0.3rem;
+  }
+  .work-title { font-family: var(--font-head); font-size: 18px; font-weight: 700; }
+  .work-center {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 2;
+  }
+  .work-icon {
+    width: 48px; height: 48px;
+    border: 1px solid rgba(255,255,255,0.1);
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .work-card:hover .work-icon { border-color: var(--accent); background: rgba(200,240,96,0.1); }
+  .work-icon svg { width: 18px; height: 18px; fill: var(--muted); transition: fill 0.2s; }
+  .work-card:hover .work-icon svg { fill: var(--accent); }
+
+  /* add-work card */
+  .add-work {
+    background: var(--bg);
+    aspect-ratio: 16/9;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 1rem;
+    border: 1px dashed var(--border);
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 0.05em;
+  }
+  .add-work-plus {
+    width: 40px; height: 40px;
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 300; color: var(--muted);
+  }
+
+  /* about */
+  .about-section { border-top: 1px solid var(--border); }
+  .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: start; }
+  .about-title {
+    font-family: var(--font-head);
+    font-size: clamp(36px, 4vw, 56px);
+    font-weight: 800; line-height: 1; letter-spacing: -0.02em;
+    margin-bottom: 2rem;
+  }
+  .about-title .accent { color: var(--accent); }
+  .about-text { color: var(--muted); line-height: 1.8; margin-bottom: 1.5rem; }
+  .about-right { padding-top: 4rem; }
+  .spec-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 0; border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .spec-key { color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px; }
+  .spec-val { color: var(--text); }
+
+  /* contact */
+  .contact-section {
+    border-top: 1px solid var(--border);
+    background: var(--bg2);
+  }
+  .contact-inner { max-width: 600px; }
+  .contact-title {
+    font-family: var(--font-head);
+    font-size: clamp(40px, 5vw, 72px);
+    font-weight: 800; line-height: 0.95; letter-spacing: -0.03em;
+    margin-bottom: 1.5rem;
+  }
+  .contact-title .accent { color: var(--accent); }
+  .contact-sub { color: var(--muted); margin-bottom: 2.5rem; line-height: 1.7; }
+  .contact-links { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+  /* footer */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 1.5rem 3rem;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  footer p { font-size: 12px; color: var(--muted); }
+
+  /* animations */
+  .fade-up { opacity: 0; transform: translateY(24px); transition: opacity 0.6s, transform 0.6s; }
+  .fade-up.visible { opacity: 1; transform: none; }
+
+  @media (max-width: 768px) {
+    nav { padding: 1.2rem 1.5rem; }
+    .nav-links { display: none; }
+    .hero { padding: 0 1.5rem 4rem; }
+    .hero-stats { display: none; }
+    section { padding: 4rem 1.5rem; }
+    .skills-grid { grid-template-columns: 1fr; }
+    .works-grid { grid-template-columns: 1fr; }
+    .about-grid { grid-template-columns: 1fr; gap: 3rem; }
+    footer { flex-direction: column; gap: 0.5rem; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+
+<nav id="nav">
+  <a href="#" class="nav-logo">bulat<span>.</span></a>
+  <ul class="nav-links">
+    <li><a href="#works">Works</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-content fade-up">
+    <p class="hero-tag">Video Editor & 3D Artist</p>
+    <h1 class="hero-title">
+      <span class="line1">VISUAL</span><br>
+      <span class="line2">STORIES</span><br>
+      <span class="accent">IN MOTION</span>
+    </h1>
+    <p class="hero-sub">Монтирую вертикальные видео и создаю 3D-графику. After Effects, Premiere Pro, Blender — каждый кадр на своём месте.</p>
+    <div class="hero-actions">
+      <a href="#works" class="btn-primary">Смотреть работы</a>
+      <a href="https://t.me/bulatcgreels" target="_blank" class="btn-ghost">@bulatcgreels</a>
+    </div>
+  </div>
+  <div class="hero-stats">
+    <div class="stat-item fade-up">
+      <div class="stat-num">3<span>+</span></div>
+      <div class="stat-label">Года опыта</div>
+    </div>
+    <div class="stat-item fade-up">
+      <div class="stat-num">100<span>+</span></div>
+      <div class="stat-label">Проектов</div>
+    </div>
+  </div>
+</section>
+
+<section class="skills-section" id="skills">
+  <p class="section-label fade-up">Стек</p>
+  <div class="skills-grid">
+    <div class="skill-card fade-up">
+      <div class="skill-icon">01 — Video</div>
+      <h3 class="skill-title">Монтаж коротких видео</h3>
+      <p class="skill-desc">Reels, TikTok, Shorts с цепляющим ритмом и визуалом. Цветокоррекция, субтитры, переходы.</p>
+      <div class="skill-tools">
+        <span class="tool-tag">Premiere Pro</span>
+        <span class="tool-tag">After Effects</span>
+      </div>
+    </div>
+    <div class="skill-card fade-up">
+      <div class="skill-icon">02 — Motion</div>
+      <h3 class="skill-title">Motion-графика</h3>
+      <p class="skill-desc">Анимированные заставки, титры, графика для бренда. Эффекты и переходы в After Effects.</p>
+      <div class="skill-tools">
+        <span class="tool-tag">After Effects</span>
+        <span class="tool-tag">Motion Bro</span>
+      </div>
+    </div>
+    <div class="skill-card fade-up">
+      <div class="skill-icon">03 — 3D</div>
+      <h3 class="skill-title">3D & CGI</h3>
+      <p class="skill-desc">Моделирование, анимация и рендер в Blender. Интеграция 3D-объектов в видеоряд.</p>
+      <div class="skill-tools">
+        <span class="tool-tag">Blender</span>
+        <span class="tool-tag">Cycles</span>
+        <span class="tool-tag">EEVEE</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="works-section" id="works">
+  <p class="section-label fade-up">Работы</p>
+  <div class="works-grid">
+
+    <div class="work-card fade-up">
+      <div class="work-placeholder-bg"></div>
+      <div class="work-placeholder-lines"></div>
+      <span class="work-num">001</span>
+      <div class="work-center">
+        <div class="work-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+      </div>
+      <div class="work-info">
+        <span class="work-type">Reels / Motion</span>
+        <p class="work-title">Project Name</p>
+      </div>
+    </div>
+
+    <div class="work-card fade-up">
+      <div class="work-placeholder-bg"></div>
+      <div class="work-placeholder-lines"></div>
+      <span class="work-num">002</span>
+      <div class="work-center">
+        <div class="work-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+      </div>
+      <div class="work-info">
+        <span class="work-type">3D / CGI</span>
+        <p class="work-title">Project Name</p>
+      </div>
+    </div>
+
+    <div class="work-card fade-up">
+      <div class="work-placeholder-bg"></div>
+      <div class="work-placeholder-lines"></div>
+      <span class="work-num">003</span>
+      <div class="work-center">
+        <div class="work-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+      </div>
+      <div class="work-info">
+        <span class="work-type">TikTok / Edit</span>
+        <p class="work-title">Project Name</p>
+      </div>
+    </div>
+
+    <div class="add-work fade-up">
+      <div class="add-work-plus">+</div>
+      <span>Добавь свои работы</span>
+    </div>
+
+  </div>
+</section>
+
+<section class="about-section" id="about">
+  <div class="about-grid">
+    <div class="fade-up">
+      <p class="section-label">О себе</p>
+      <h2 class="about-title">КАДР — <span class="accent">ЭТО</span> ВСЁ</h2>
+      <p class="about-text">Монтирую вертикальные видео для брендов, блогеров и компаний. Работаю в After Effects и Premiere Pro, параллельно развиваю 3D-направление в Blender.</p>
+      <p class="about-text">Каждый проект — это отдельная история с ритмом, настроением и чёткой идеей. Без шаблонов.</p>
+    </div>
+    <div class="about-right fade-up">
+      <div class="spec-row">
+        <span class="spec-key">Специализация</span>
+        <span class="spec-val">Вертикальный монтаж</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">Стек</span>
+        <span class="spec-val">AE · Pr · Blender</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">Формат</span>
+        <span class="spec-val">Reels / TikTok / Shorts</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">Telegram</span>
+        <span class="spec-val">@bulatcgreels</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">Статус</span>
+        <span class="spec-val" style="color:var(--accent)">● Открыт к заказам</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="contact-section" id="contact">
+  <div class="contact-inner fade-up">
+    <p class="section-label">Контакт</p>
+    <h2 class="contact-title">ДАВАЙ<br>СДЕЛАЕМ<br><span class="accent">КРУТОЕ</span><br>ВИДЕО</h2>
+    <p class="contact-sub">Напиши — обсудим задачу, сроки и детали. Отвечаю быстро.</p>
+    <div class="contact-links">
+      <a href="https://t.me/bulatcgreels" target="_blank" class="btn-primary">Написать в Telegram</a>
+      <a href="https://t.me/bulatcgreels" target="_blank" class="btn-ghost">Примеры работ →</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>© 2025 Bulat — Video Editor & 3D</p>
+  <p>Neftekamsk, RU</p>
+</footer>
+
+<script>
+  // cursor
+  const cursor = document.getElementById('cursor');
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
+  });
+  document.querySelectorAll('a, button, .work-card, .skill-card').forEach(el => {
+    el.addEventListener('mouseenter', () => cursor.classList.add('big'));
+    el.addEventListener('mouseleave', () => cursor.classList.remove('big'));
+  });
+
+  // nav scroll
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 40);
+  });
+
+  // fade-up on scroll
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+  // stagger hero
+  setTimeout(() => {
+    document.querySelectorAll('.hero .fade-up').forEach((el, i) => {
+      setTimeout(() => el.classList.add('visible'), i * 120);
+    });
+  }, 100);
+</script>
+</body>
+</html>
