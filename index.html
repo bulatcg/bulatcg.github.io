@@ -224,13 +224,14 @@
   .vc.vertical { aspect-ratio: 9/16; }
   .vc.horizontal { aspect-ratio: 16/9; max-width: 740px; }
 
-  .vc iframe {
+  .vc iframe,
+  .vc video {
     width: 100%; height: 100%;
     border: none; display: block;
     position: absolute; inset: 0;
-    opacity: 0; transition: opacity 0.3s;
-    pointer-events: none;
+    object-fit: cover;
   }
+  .vc iframe { opacity: 0; transition: opacity 0.3s; pointer-events: none; }
   .vc.playing iframe { opacity: 1; pointer-events: auto; }
 
   /* thumbnail */
@@ -258,7 +259,8 @@
     transition: opacity 0.3s;
     pointer-events: none;
   }
-  .vc.playing .play-btn { opacity: 0; }
+  .vc.playing .play-btn { opacity: 0; pointer-events: none; }
+  .vc.playing .vgrad { opacity: 0; }
   .play-circle {
     width: 56px; height: 56px; border-radius: 50%;
     background: rgba(5,10,18,0.45);
@@ -430,16 +432,14 @@
       <a href="https://t.me/bulatcgreels" target="_blank" class="cat-link">@bulatcgreels ↗</a>
     </div>
     <div class="grid-vertical">
-      <div class="vc vertical" data-id="lHnNlXuWYaE">
-        <div class="thumb" style="background-image:url('https://i.ytimg.com/vi/lHnNlXuWYaE/hqdefault.jpg')"></div>
+      <div class="vc vertical">
+        <video src="SecondWorkportfolioCompressed.mp4" playsinline preload="metadata"></video>
         <div class="vgrad"></div>
-        <iframe allowfullscreen allow="autoplay; encrypted-media"></iframe>
         <div class="play-btn"><div class="play-circle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
       </div>
-      <div class="vc vertical" data-id="6c8_gvzRMNw">
-        <div class="thumb" style="background-image:url('https://i.ytimg.com/vi/6c8_gvzRMNw/hqdefault.jpg')"></div>
+      <div class="vc vertical">
+        <video src="FirstCompTutor1Compressed.mp4" playsinline preload="metadata"></video>
         <div class="vgrad"></div>
-        <iframe allowfullscreen allow="autoplay; encrypted-media"></iframe>
         <div class="play-btn"><div class="play-circle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
       </div>
     </div>
@@ -452,22 +452,19 @@
       <a href="https://t.me/bulatcg3d" target="_blank" class="cat-link">@bulatcg3d ↗</a>
     </div>
     <div class="grid-vertical">
-      <div class="vc vertical" data-id="IdJsb_ziJK4">
-        <div class="thumb" style="background-image:url('https://i.ytimg.com/vi/IdJsb_ziJK4/hqdefault.jpg')"></div>
+      <div class="vc vertical">
+        <video src="IMG_4841Compressed2.mp4" playsinline preload="metadata"></video>
         <div class="vgrad"></div>
-        <iframe allowfullscreen allow="autoplay; encrypted-media"></iframe>
         <div class="play-btn"><div class="play-circle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
       </div>
-      <div class="vc vertical" data-id="_cQ6eTR0cKQ">
-        <div class="thumb" style="background-image:url('https://i.ytimg.com/vi/_cQ6eTR0cKQ/hqdefault.jpg')"></div>
+      <div class="vc vertical">
+        <video src="KeyboardCapCut.mp4" playsinline preload="metadata"></video>
         <div class="vgrad"></div>
-        <iframe allowfullscreen allow="autoplay; encrypted-media"></iframe>
         <div class="play-btn"><div class="play-circle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
       </div>
-      <div class="vc vertical" data-id="3M0rfzaSaKI">
-        <div class="thumb" style="background-image:url('https://i.ytimg.com/vi/3M0rfzaSaKI/hqdefault.jpg')"></div>
+      <div class="vc vertical">
+        <video src="clousd2.mp4" playsinline preload="metadata"></video>
         <div class="vgrad"></div>
-        <iframe allowfullscreen allow="autoplay; encrypted-media"></iframe>
         <div class="play-btn"><div class="play-circle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
       </div>
     </div>
@@ -478,11 +475,9 @@
     <div class="cat-header">
       <h2 class="cat-title">Motion <span>графика</span></h2>
     </div>
-    <div class="vc horizontal" data-id="LS4HrnxqNTI" data-loop="1">
-      <div class="thumb" style="background-image:url('https://i.ytimg.com/vi/LS4HrnxqNTI/hqdefault.jpg')"></div>
+    <div class="vc horizontal">
+      <video src="Comp 4.mp4" playsinline loop autoplay muted></video>
       <div class="vgrad"></div>
-      <iframe allowfullscreen allow="autoplay; encrypted-media"></iframe>
-      <div class="play-btn"><div class="play-circle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
     </div>
     <p class="motion-note">3 сек · зациклено</p>
   </div>
@@ -571,13 +566,19 @@
 <script>
 // video play on click
 document.querySelectorAll('.vc').forEach(card => {
+  const video = card.querySelector('video');
+  const playBtn = card.querySelector('.play-btn');
+  if (!video || !playBtn) return;
   card.addEventListener('click', () => {
-    if (card.classList.contains('playing')) return;
-    const id = card.dataset.id;
-    const loop = card.dataset.loop ? `&loop=1&playlist=${id}` : '';
-    const iframe = card.querySelector('iframe');
-    iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&mute=0&rel=0&modestbranding=1&playsinline=1${loop}`;
-    card.classList.add('playing');
+    if (card.classList.contains('playing')) {
+      video.paused ? video.play() : video.pause();
+    } else {
+      video.play();
+      card.classList.add('playing');
+    }
+  });
+  video.addEventListener('ended', () => {
+    if (!video.loop) card.classList.remove('playing');
   });
 });
 
