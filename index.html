@@ -212,36 +212,68 @@
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 12px;
   }
-  .video-card-v {
+
+  /* shared video card base */
+  .vc {
     border-radius: 14px; overflow: hidden;
-    aspect-ratio: 9/16;
     position: relative;
-    background: var(--glass);
+    background: #0a1520;
     border: 1px solid var(--glass-border);
+    cursor: pointer;
   }
-  .video-card-v iframe {
+  .vc.vertical { aspect-ratio: 9/16; }
+  .vc.horizontal { aspect-ratio: 16/9; max-width: 740px; }
+
+  .vc iframe {
     width: 100%; height: 100%;
     border: none; display: block;
-    pointer-events: none;
-  }
-  .video-card-v .overlay {
     position: absolute; inset: 0;
-    background: linear-gradient(to top, rgba(5,10,18,0.5) 0%, transparent 40%);
-    border-radius: 14px;
+    opacity: 0; transition: opacity 0.3s;
     pointer-events: none;
   }
+  .vc.playing iframe { opacity: 1; pointer-events: auto; }
 
-  /* horizontal video */
-  .grid-horizontal { display: grid; grid-template-columns: 1fr; gap: 12px; }
-  .video-card-h {
-    border-radius: 14px; overflow: hidden;
-    aspect-ratio: 16/9;
-    position: relative;
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    max-width: 800px;
+  /* thumbnail */
+  .vc .thumb {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    transition: transform 0.4s, opacity 0.3s;
   }
-  .video-card-h iframe { width: 100%; height: 100%; border: none; display: block; }
+  .vc.playing .thumb { opacity: 0; pointer-events: none; }
+  .vc:hover .thumb { transform: scale(1.03); }
+
+  /* dark gradient over thumb */
+  .vc .vgrad {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(5,10,18,0.65) 0%, rgba(5,10,18,0.1) 60%);
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .vc.playing .vgrad { opacity: 0; }
+
+  /* play button */
+  .vc .play-btn {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .vc.playing .play-btn { opacity: 0; }
+  .play-circle {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: rgba(5,10,18,0.45);
+    border: 1.5px solid rgba(56,208,232,0.55);
+    backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.2s, background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  }
+  .vc:hover .play-circle {
+    transform: scale(1.12);
+    background: rgba(56,208,232,0.18);
+    border-color: var(--accent);
+    box-shadow: 0 0 24px rgba(56,208,232,0.35);
+  }
+  .play-circle svg { width: 20px; height: 20px; fill: var(--accent); margin-left: 3px; }
 
   /* motion looping video */
   .motion-wrap {
@@ -398,13 +430,17 @@
       <a href="https://t.me/bulatcgreels" target="_blank" class="cat-link">@bulatcgreels ↗</a>
     </div>
     <div class="grid-vertical">
-      <div class="video-card-v">
-        <iframe src="https://www.youtube.com/embed/lHnNlXuWYaE?autoplay=0&rel=0&modestbranding=1" allowfullscreen allow="autoplay"></iframe>
-        <div class="overlay"></div>
+      <div class="vc vertical" data-id="lHnNlXuWYaE">
+        <div class="thumb" style="background-image:url('https://i.ytimg.com/vi/lHnNlXuWYaE/hqdefault.jpg')"></div>
+        <div class="vgrad"></div>
+        <iframe allowfullscreen allow="autoplay; encrypted-media"></iframe>
+        <div class="play-btn"><div class="play-circle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
       </div>
-      <div class="video-card-v">
-        <iframe src="https://www.youtube.com/embed/6c8_gvzRMNw?autoplay=0&rel=0&modestbranding=1" allowfullscreen allow="autoplay"></iframe>
-        <div class="overlay"></div>
+      <div class="vc vertical" data-id="6c8_gvzRMNw">
+        <div class="thumb" style="background-image:url('https://i.ytimg.com/vi/6c8_gvzRMNw/hqdefault.jpg')"></div>
+        <div class="vgrad"></div>
+        <iframe allowfullscreen allow="autoplay; encrypted-media"></iframe>
+        <div class="play-btn"><div class="play-circle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
       </div>
     </div>
   </div>
@@ -416,17 +452,23 @@
       <a href="https://t.me/bulatcg3d" target="_blank" class="cat-link">@bulatcg3d ↗</a>
     </div>
     <div class="grid-vertical">
-      <div class="video-card-v">
-        <iframe src="https://www.youtube.com/embed/IdJsb_ziJK4?autoplay=0&rel=0&modestbranding=1" allowfullscreen allow="autoplay"></iframe>
-        <div class="overlay"></div>
+      <div class="vc vertical" data-id="IdJsb_ziJK4">
+        <div class="thumb" style="background-image:url('https://i.ytimg.com/vi/IdJsb_ziJK4/hqdefault.jpg')"></div>
+        <div class="vgrad"></div>
+        <iframe allowfullscreen allow="autoplay; encrypted-media"></iframe>
+        <div class="play-btn"><div class="play-circle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
       </div>
-      <div class="video-card-v">
-        <iframe src="https://www.youtube.com/embed/_cQ6eTR0cKQ?autoplay=0&rel=0&modestbranding=1" allowfullscreen allow="autoplay"></iframe>
-        <div class="overlay"></div>
+      <div class="vc vertical" data-id="_cQ6eTR0cKQ">
+        <div class="thumb" style="background-image:url('https://i.ytimg.com/vi/_cQ6eTR0cKQ/hqdefault.jpg')"></div>
+        <div class="vgrad"></div>
+        <iframe allowfullscreen allow="autoplay; encrypted-media"></iframe>
+        <div class="play-btn"><div class="play-circle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
       </div>
-      <div class="video-card-v">
-        <iframe src="https://www.youtube.com/embed/3M0rfzaSaKI?autoplay=0&rel=0&modestbranding=1" allowfullscreen allow="autoplay"></iframe>
-        <div class="overlay"></div>
+      <div class="vc vertical" data-id="3M0rfzaSaKI">
+        <div class="thumb" style="background-image:url('https://i.ytimg.com/vi/3M0rfzaSaKI/hqdefault.jpg')"></div>
+        <div class="vgrad"></div>
+        <iframe allowfullscreen allow="autoplay; encrypted-media"></iframe>
+        <div class="play-btn"><div class="play-circle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
       </div>
     </div>
   </div>
@@ -436,10 +478,13 @@
     <div class="cat-header">
       <h2 class="cat-title">Motion <span>графика</span></h2>
     </div>
-    <div class="motion-wrap">
-      <iframe src="https://www.youtube.com/embed/LS4HrnxqNTI?autoplay=1&mute=1&loop=1&playlist=LS4HrnxqNTI&controls=0&rel=0&modestbranding=1&playsinline=1" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+    <div class="vc horizontal" data-id="LS4HrnxqNTI" data-loop="1">
+      <div class="thumb" style="background-image:url('https://i.ytimg.com/vi/LS4HrnxqNTI/hqdefault.jpg')"></div>
+      <div class="vgrad"></div>
+      <iframe allowfullscreen allow="autoplay; encrypted-media"></iframe>
+      <div class="play-btn"><div class="play-circle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
     </div>
-    <p class="motion-note">Зациклено — проигрывается как gif</p>
+    <p class="motion-note">3 сек · зациклено</p>
   </div>
 
 </section>
@@ -519,11 +564,23 @@
 </section>
 
 <footer>
-  <p>© 2025 Bulat — Video Editor & 3D</p>
+  <p>© 2026 Bulat — Video Editor & 3D</p>
   <p>Neftekamsk, RU</p>
 </footer>
 
 <script>
+// video play on click
+document.querySelectorAll('.vc').forEach(card => {
+  card.addEventListener('click', () => {
+    if (card.classList.contains('playing')) return;
+    const id = card.dataset.id;
+    const loop = card.dataset.loop ? `&loop=1&playlist=${id}` : '';
+    const iframe = card.querySelector('iframe');
+    iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&mute=0&rel=0&modestbranding=1&playsinline=1${loop}`;
+    card.classList.add('playing');
+  });
+});
+
 // cursor
 const cursor = document.getElementById('cursor');
 document.addEventListener('mousemove', e => {
