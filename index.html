@@ -459,5 +459,39 @@ track.addEventListener('touchend', e=>{
   resize();init();window.addEventListener('resize',resize);requestAnimationFrame(draw);
 })();
 </script>
+
+<!-- ══ REVIEWS TICKER ══ -->
+<style>
+.reviews-section{width:100%;scroll-snap-align:start;background:var(--bg);padding:3rem 0 4rem;position:relative;z-index:1}
+.reviews-title{font-family:var(--mono);font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:.7rem;padding:0 3rem 2rem}
+.reviews-title::before{content:'';width:22px;height:1px;background:var(--accent)}
+.ticker-wrap{overflow:hidden;position:relative}
+.ticker-wrap::before,.ticker-wrap::after{content:'';position:absolute;top:0;bottom:0;width:120px;z-index:2;pointer-events:none}
+.ticker-wrap::before{left:0;background:linear-gradient(to right,var(--bg),transparent)}
+.ticker-wrap::after{right:0;background:linear-gradient(to left,var(--bg),transparent)}
+.ticker-track{display:flex;gap:16px;width:max-content;animation:ticker 18s linear infinite}
+.ticker-track:hover{animation-play-state:paused}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.rev-card{flex-shrink:0;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.08);height:110px;background:rgba(255,255,255,0.04)}
+.rev-card img{height:100%;width:auto;display:block;object-fit:contain}
+</style>
+<section class="reviews-section">
+  <div class="reviews-title">Отзывы</div>
+  <div class="ticker-wrap">
+    <div class="ticker-track">
+      <div class="rev-card"><img src="1.jpg" alt="review"></div>
+      <div class="rev-card"><img src="2.jpg" alt="review"></div>
+      <div class="rev-card"><img src="3.jpg" alt="review"></div>
+      <div class="rev-card"><img src="4.jpg" alt="review"></div>
+      <div class="rev-card"><img src="5.jpg" alt="review"></div>
+      <div class="rev-card"><img src="1.jpg" alt="review"></div>
+      <div class="rev-card"><img src="2.jpg" alt="review"></div>
+      <div class="rev-card"><img src="3.jpg" alt="review"></div>
+      <div class="rev-card"><img src="4.jpg" alt="review"></div>
+      <div class="rev-card"><img src="5.jpg" alt="review"></div>
+    </div>
+  </div>
+</section>
+
 </body>
 </html>
